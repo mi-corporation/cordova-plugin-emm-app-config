@@ -4,35 +4,35 @@
  */
 
 var argscheck = require('cordova/argscheck'),
-    channel = require('cordova/channel'),
-    utils = require('cordova/utils'),
-    exec = require('cordova/exec'),
-    cordova = require('cordova');
+  channel = require('cordova/channel'),
+  utils = require('cordova/utils'),
+  exec = require('cordova/exec'),
+  cordova = require('cordova');
 
 channel.createSticky('onEmmAppConfigReady');
 // Tell cordova channel to wait on the EmmAppConfigReady event
-channel.waitForInitialization('onEmmAppConfigReady');
+if (window.cordova.platformId !== 'windows') {
+  channel.waitForInitialization('onEmmAppConfigReady');
+}
 
 /**
  * This class provides methods for getting EMM application configuration and 
  * registering change listener.
  * @constructor
  */
-function EmmAppConfig()
-{
+function EmmAppConfig() {
   this._appConfig = null;
   this._hasListener = false;
 
   var self = this;
 
   channel.onCordovaReady.subscribe(
-    function()
-    {
-      var successCallback = function(info) {
+    function () {
+      var successCallback = function (info) {
         self._appConfig = info;
         channel.onEmmAppConfigReady.fire();
       };
-      var errorCallback = function(e) {
+      var errorCallback = function (e) {
         console.log('[ERROR] Error from EmmAppConfig.getConfigInfo: ' + e);
       };
 
@@ -49,20 +49,16 @@ function EmmAppConfig()
  * @return {Any} the value of the keyed entry specified by "configKey", or 
  *   an object that contains all the values.
  */
-EmmAppConfig.prototype.getValue = function(configKey)
-{
-  if (this._appConfig)
-  {
-    if (configKey)
-    {
+EmmAppConfig.prototype.getValue = function (configKey) {
+  if (this._appConfig) {
+    if (configKey) {
       return this._appConfig[configKey];
     }
-    else
-    {
+    else {
       return this._appConfig;
     }
   }
-  
+
   return null;
 };
 
@@ -75,26 +71,23 @@ EmmAppConfig.prototype.getValue = function(configKey)
  *   is not available.  The listener should call getValue to get the new values
  *   and decide how it handles any change.
  */
-EmmAppConfig.prototype.registerChangedListener = function(listener)
-{
-  if (listener && typeof listener == 'function')
-  {
+EmmAppConfig.prototype.registerChangedListener = function (listener) {
+  if (listener && typeof listener == 'function') {
     // Add an event listener at the Javascript layer
     document.addEventListener('emmappconfigchanged', listener);
 
     // We only need to add our own listener at the native layer once
-    if (!this._hasListener)
-    {
+    if (!this._hasListener) {
       this._hasListener = true;
 
       var self = this;
 
-      var successCallback = function(info) {
+      var successCallback = function (info) {
         self._appConfig = info;
         var event = new Event('emmappconfigchanged');
         document.dispatchEvent(event);
       };
-      var errorCallback = function(e) {
+      var errorCallback = function (e) {
         console.log('[ERROR] Error from EmmAppConfig.registerChangedListener: ' + e);
       };
 
